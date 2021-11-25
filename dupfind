@@ -1,0 +1,56 @@
+#!/bin/bash
+
+if [[ $# -lt 1 ]]; then
+	echo "Usage: $0 <path>"
+	exit 1
+fi
+
+find_dup_size() {
+	last_size=
+	last_file=
+	while read line; do
+		curr_size=${line%% *}
+		curr_file=${line#* }
+		if [[ $curr_size = $last_size ]]; then
+			if [[ -n $last_file ]]; then
+				echo "$last_size $last_file"
+				last_file=
+			fi
+			echo "$curr_size $curr_file"
+		else
+			last_file=$curr_file
+		fi
+		last_size=$curr_size
+	done
+}
+
+add_md5_sum() {
+	while read line; do
+		size=${line%% *}
+		file=${line#* }
+		sum=$(md5sum "$file")
+		echo "${sum/  / $size }"
+	done
+}
+
+find_dup_sum() {
+	last_sum=
+	last_file=
+	while read line; do
+		curr_sum=${line%% *}
+		curr_file=${line#* }
+		if [[ $curr_sum = $last_sum ]]; then
+			if [[ -n $last_file ]]; then
+				echo "$last_file"
+				last_file=
+			fi
+			echo "$curr_file"
+		else
+			last_file=$curr_file
+		fi
+		last_sum=$curr_sum
+	done
+}
+
+find "$1" -type f ! -size 0 -printf '%s %p\n' | sort -nr | \
+	find_dup_size | add_md5_sum | find_dup_sum
