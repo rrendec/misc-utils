@@ -9,9 +9,6 @@ find_dup_size() {
 	last_size=
 	last_file=
 	while read line; do
-		if [[ $line = "--" ]]; then
-			continue
-		fi
 		curr_size=${line%% *}
 		curr_file=${line#* }
 		if [[ $curr_size = $last_size ]]; then
@@ -29,9 +26,6 @@ find_dup_size() {
 
 add_md5_sum() {
 	while read line; do
-		if [[ $line = "--" ]]; then
-			continue
-		fi
 		size=${line%% *}
 		file=${line#* }
 		if [[ -n $1 ]]; then
@@ -48,13 +42,13 @@ pr_file() {
 	if [[ $2 = "-" ]]; then
 		echo "$1"
 	else
-		echo "$2 $1"
+		echo "${1/ / $2 }"
 	fi
 }
 
 find_dup_sum() {
 	last_sum=
-	last_file=x
+	last_file=
 	while read line; do
 		curr_sum=${line%% *}
 		curr_file=${line#* }
@@ -65,11 +59,23 @@ find_dup_sum() {
 			fi
 			pr_file "$curr_file" ${1:-$curr_sum}
 		else
-			if [[ -z $last_file ]]; then
-				echo "--"
-			fi
 			last_file=$curr_file
 		fi
+		last_sum=$curr_sum
+	done
+}
+
+pr_group() {
+	last_sum=
+	while read line; do
+		curr_size=${line%% *}
+		curr_file=${line#* }
+		curr_sum=${curr_file%% *}
+		curr_file=${curr_file#* }
+		if [[ $curr_sum != $last_sum && -n $last_sum ]]; then
+			echo "--"
+		fi
+		echo "$curr_sum $curr_size $curr_file"
 		last_sum=$curr_sum
 	done
 }
@@ -77,4 +83,4 @@ find_dup_sum() {
 find "$1" -type f ! -size 0 -printf '%s %p\n' | \
 	sort -n | find_dup_size | add_md5_sum 64 | \
 	sort | find_dup_sum - | add_md5_sum | \
-	sort | find_dup_sum
+	sort | find_dup_sum | sort -nr | pr_group
