@@ -11,6 +11,9 @@ find_dup_size() {
 	while read line; do
 		curr_size=${line%% *}
 		curr_file=${line#* }
+		if [[ $curr_size = 0 ]]; then
+			continue
+		fi
 		if [[ $curr_size = $last_size ]]; then
 			if [[ -n $last_file ]]; then
 				echo "$last_size $last_file"
@@ -80,7 +83,7 @@ pr_group() {
 	done
 }
 
-find "$1" -type f ! -size 0 -printf '%s %p\n' | \
+find "$@" -type f -printf '%s %p\n' | \
 	sort -n | find_dup_size | add_md5_sum 64 | \
 	sort | find_dup_sum - | add_md5_sum | \
 	sort | find_dup_sum | sort -nr | pr_group
