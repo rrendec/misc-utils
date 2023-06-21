@@ -1,5 +1,9 @@
-dupfind
-=======
+misc-utils
+==========
+
+Various shell utilities. See detailed description for each utility below.
+
+# dupfind
 
 dupfind is a very simple Bash script that finds duplicate files.
 
@@ -28,3 +32,7 @@ fa62f78b99b3c9c940ea730d5e4dd5e3 37 test/sample-A-copy1
 fa62f78b99b3c9c940ea730d5e4dd5e3 37 test/foo/sample A copy 2
 fa62f78b99b3c9c940ea730d5e4dd5e3 37 test/foo/bar/sample-A-copy3
 ```
+
+# rpmorphans
+
+rpmorphans finds the files that are not owned by any RPM package.
