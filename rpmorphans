@@ -1,0 +1,36 @@
+#!/bin/bash
+
+pkglist=$(mktemp)
+fslist=$(mktemp)
+tmplist=$(mktemp)
+
+echo "Stage 1: Query RPM packages" >&2
+rpm -qal | sort > $pkglist
+
+echo "Stage 2: Find all files" >&2
+root=$(find / -mindepth 1 -maxdepth 1 -type d \
+	-not -name dev \
+	-not -name home \
+	-not -name media \
+	-not -name mnt \
+	-not -name proc \
+	-not -name root \
+	-not -name run \
+	-not -name sys \
+	-not -name tmp \
+	)
+find $root -not -type d -not -type p -not -type s | sort > $fslist
+
+echo "Stage 3: Filter" >&2
+
+for link in $(find / -maxdepth 1 -type l); do
+	regex="$regex;s|^$(readlink -f $link)/|$link/|"
+done
+if [[ -n $regex ]]; then
+	comm -13 $pkglist $fslist > $tmplist
+	sed "${regex:1}" < $tmplist | sort > $fslist
+fi
+
+comm -13 $pkglist $fslist
+
+rm -f $pkglist $fslist $tmplist
